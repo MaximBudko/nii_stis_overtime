@@ -1,0 +1,62 @@
+<%= form_with url: do_generate_ov_path(format: :xlsx), method: :post, local: true do |j|%>
+  <fieldset>
+    <legend><strong>Выберите сотрудников:</strong></legend>
+
+    <div id="user-checkboxes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;">
+      <% User.active.sorted.each do |user| %>
+        <div class="user-option">
+          <label>
+            <%= check_box_tag "user_ids[]", user.id, false, id: "user_#{user.id}", class: "user-checkbox" %>
+            <%= user.name %>
+          </label>
+        </div>
+      <% end %>
+    </div>
+  </fieldset>
+
+  <fieldset style="margin-top: 20px;">
+    <legend><strong>Когда работы(выходные или буднии):</strong></legend>
+
+    <label for="option_select">Выберите пункт:</label><br>
+    <%= select_tag :option_select, options_for_select([['В выходные', 'option_1'], ['В буднии', 'option_2']], params[:option_select]), include_blank: '--- Выберите ---' %>
+  </fieldset>
+
+  <fieldset style="margin-top: 20px;">
+    <legend><strong>Диапазон дат:</strong></legend>
+
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+      <div>
+        <label for="start_date">Дата начала:</label><br>
+        <%= j.date_field 'start_date'%>
+      </div>
+
+      <div>
+        <label for="end_date">Дата окончания:</label><br>
+        <%= j.date_field 'end_date' %>
+      </div>
+    </div>
+  </fieldset>
+
+  <br>
+
+  <%= j.submit "Сформировать отчёт", class: "button" %>
+<% end %>
+
+
+<style>
+  .user-option {
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  .user-option:hover {
+    background-color: #f0f0f0;
+  }
+
+  .user-checkbox:checked + span,
+  .user-option input[type="checkbox"]:checked + label {
+    font-weight: bold;
+    color: #2a2;
+  }
+</style>

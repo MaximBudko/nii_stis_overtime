@@ -4,7 +4,6 @@ class OverWorkController < ApplicationController
   end
 
   def do_generate_ov
-    # Параметры
     user_ids = params[:user_ids] || []
     @global_user_ids = user_ids
     start_date_str = params[:start_date]
@@ -12,7 +11,7 @@ class OverWorkController < ApplicationController
     type_overwork = params[:option_select]
 
     @global_type_overwork = type_overwork.to_s
-    # Проверка выбранных пользователей
+
     if user_ids.blank?
       flash[:error] = "Пользователи не выбраны"
       redirect_to action: :generate_overtime_report and return 
@@ -27,31 +26,30 @@ class OverWorkController < ApplicationController
       flash[:error] = "Укажите дату окончания"
       redirect_to action: :generate_overtime_report and return 
     end 
+
     start_date = Date.parse(start_date_str)
     end_date = Date.parse(end_date_str)
-    
-    
+
     date_range = (start_date..end_date).to_a
     @date_range_overtime = date_range
 
-    # Проверка активности "Overtime"
-    overtime_activity = TimeEntryActivity.find_by(name: "Сверхурочные")
-    unless overtime_activity
-      flash[:error] = "Активность 'Overtime' не найдена"
-      redirect_to action: :generate_overtime_report and return 
-    end
+    custom_field = TimeEntryCustomField.find_by(name: 'Тип работ')
 
-    # Поиск трудозатрат
-    entries = TimeEntry.includes(:issue)
-                       .where(user_id: user_ids, activity_id: overtime_activity.id)
-    entries = entries.where(spent_on: date_range) if date_range
+    entries = TimeEntry
+      .includes(:issue)
+      .joins(:custom_values)
+      .where(user_id: user_ids)
+      .where(spent_on: date_range)
+      .where(custom_values: {
+        custom_field_id: custom_field.id,
+        value: 'Сверхурочная'
+      })
 
-    # Сбор уникальных задач
     @overtime_issues = entries.map(&:issue).compact.uniq
     @users = User.where(id: user_ids)
 
     if @overtime_issues.blank?
-      flash[:error] = "У выбранных пользователей нет задач с деятельностью 'Сверхурочные' за выбранный период."
+      flash[:error] = "У выбранных пользователей нет задач с типом работ 'Сверхурочная' за выбранный период."
       redirect_to action: :generate_overtime_report and return
     end
 
@@ -62,6 +60,11 @@ class OverWorkController < ApplicationController
       end
     end
   end
+
+  def generate_ov_doc_rep
+    
+  end
+
 
   private
 

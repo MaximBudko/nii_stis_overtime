@@ -12,7 +12,7 @@ group_title = s.add_style sz: 11, alignment: {horizontal: :center, vertical: :ce
 issues_row = s.add_style sz: 11, alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, font_name: 'Times New Roman', border: {style: :thin, color: '000000'}
 estimate_issue_row = s.add_style sz: 11, alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, font_name: 'Times New Roman', border: {style: :thin, color: '000000'}
 signature = s.add_style sz: 11, alignment: {horizontal: :left, vertical: :bottom}, font_name: 'Times New Roman'
-
+issue_iter = s.add_style sz: 11, alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, font_name: 'Times New Roman', border: {style: :thin, color: '000000'}
 
 
 issues = Issue.all
@@ -64,86 +64,94 @@ wb.add_worksheet(name: "Report") do |sheet|
 
     printed_groups_by_date = Hash.new { |hash, key| hash[key] = Set.new }
 
+    custom_field = TimeEntryCustomField.find_by(name: 'Тип работ')
+
     @date_range_overtime.each do |date|
-        activity = TimeEntryActivity.find_by(name: 'Сверхурочные')
-        entries = TimeEntry.where(spent_on: date, activity_id: activity.id)
-        if entries.exists?
-            sheet.add_row ["#{date.strftime("%d.%m.%Y")} г. (#{I18n.l(date, format: "%A")})", "", "", ""], style: table_title2
+    entries = TimeEntry
+        .joins(:custom_values)
+        .where(spent_on: date)
+        .where(custom_values: {
+        custom_field_id: custom_field.id,
+        value: 'Сверхурочная'
+        })
+
+    if entries.exists?
+        sheet.add_row ["#{date.strftime("%d.%m.%Y")} г. (#{I18n.l(date, format: "%A")})", "", "", ""], style: table_title2
+        sheet.merge_cells("A#{iterator}:D#{iterator}")
+        iterator += 1
+    else 
+        next
+    end
+
+    serial_number = 1
+    users_loop.each do |user|
+        custom_field_users_surname = user.custom_field_values.detect {|cf| cf.custom_field.name == 'surname'}
+        custom_field_users_job_title = user.custom_field_values.detect {|cf| cf.custom_field.name == 'job_title'}
+        group = user.groups
+
+        group.each do |group_loop|
+        group_name = group_loop.to_s
+        unless printed_groups_by_date[date].include?(group_name)
+            sheet.add_row ["#{group_loop}", "", "", ""], style: group_title
             sheet.merge_cells("A#{iterator}:D#{iterator}")
+            printed_groups_by_date[date] << group_name
             iterator += 1
-        else 
-            next
+            vertical_merge_iterator = iterator
         end
-        serial_number = 1
-        users_loop.each do |user|
-            custom_field_users_surname = user.custom_field_values.detect {|cf| cf.custom_field.name == 'surname'}
-            custom_field_users_job_title = user.custom_field_values.detect {|cf| cf.custom_field.name == 'job_title'}
-            group = user.groups
-            
-            group.each do |group_loop|
-                group_name = group_loop.to_s
-                unless printed_groups_by_date[date].include?(group_name)
-                    sheet.add_row ["#{group_loop}", "", "", ""], style: group_title
-                    sheet.merge_cells("A#{iterator}:D#{iterator}")
-                    printed_groups_by_date[date] << group_name
-                    iterator += 1
-                    vertical_merge_iterator = iterator
-                end
 
-                if activity
-                    time_entries = TimeEntry.where(user_id: user.id, activity_id: activity.id, spent_on: date)
-                    issues = Issue.where(id: time_entries.pluck(:issue_id).uniq)
+        time_entries = TimeEntry
+            .joins(:custom_values)
+            .where(user_id: user.id, spent_on: date)
+            .where(custom_values: {
+            custom_field_id: custom_field.id,
+            value: 'Сверхурочная'
+            })
 
-                    issues.group_by(&:assigned_to).each do |owner, owner_issues|
-                        next if owner.nil? # Пропускаем задачи без владельца
+        issues = Issue.where(id: time_entries.pluck(:issue_id).uniq)
 
-                        merge_start = iterator
-                        task_count = owner_issues.size
+        issues.group_by(&:assigned_to).each do |owner, owner_issues|
+            next if owner.nil? # Пропускаем задачи без владельца
 
-                        owner_issues.each_with_index do |issue, idx|
-                        # Время
-                        total_estimate_time = 0
-                        formatted_time = nil
+            merge_start = iterator
+            task_count = owner_issues.size
 
-                        time_entries.each do |ent|
-                            next unless ent.issue_id == issue.id
-                            total_estimate_time = ent.hours
-                            h = total_estimate_time.floor
-                            m = ((total_estimate_time - h) * 60).round
-                            formatted_time = format("%d:%02d", h, m)
-                        end
+            owner_issues.each_with_index do |issue, idx|
+            # Время
+            total_estimate_time = 0
+            formatted_time = nil
 
-                        # Номер строки (только в первую строку для этого пользователя)
-                        serial = idx.zero? ? serial_number : ""
-
-                        # Добавление строки
-                        sheet.add_row [
-                            "#{serial}",
-                            "#{custom_field_users_job_title}\n#{user.firstname.to_s[0]}.#{custom_field_users_surname.to_s[0]}. #{user.lastname}",
-                            "#{issue.description}",
-                            "#{formatted_time}"
-                        ], style: [issues_row, 
-                        issues_row, 
-                        issues_row, 
-                        estimate_issue_row]
-
-                        iterator += 1
-                        end
-
-                        if task_count > 1
-                        merge_end = iterator - 1
-                        # Объединяем A и B
-                        sheet.merge_cells("A#{merge_start}:A#{merge_end}")
-                        sheet.merge_cells("B#{merge_start}:B#{merge_end}")
-                        end
-
-                        # Увеличиваем номер только один раз на пользователя
-                        serial_number += 1
-                    end
-                end
+            time_entries.each do |ent|
+                next unless ent.issue_id == issue.id
+                total_estimate_time = ent.hours
+                h = total_estimate_time.floor
+                m = ((total_estimate_time - h) * 60).round
+                formatted_time = format("%d:%02d", h, m)
             end
+
+            serial = idx.zero? ? serial_number : ""
+
+            sheet.add_row [
+                "#{serial}",
+                "#{custom_field_users_job_title}\n#{user.firstname.to_s[0]}.#{custom_field_users_surname.to_s[0]}. #{user.lastname}",
+                "#{issue.description}",
+                "#{formatted_time}"
+            ], style: [issue_iter, issues_row, issues_row, estimate_issue_row]
+
+            iterator += 1
+            end
+
+            if task_count > 1
+            merge_end = iterator - 1
+            sheet.merge_cells("A#{merge_start}:A#{merge_end}")
+            sheet.merge_cells("B#{merge_start}:B#{merge_end}")
+            end
+
+            serial_number += 1
+        end
         end
     end
+    end
+
 
     sheet.add_row [""]
     sheet.add_row [""]

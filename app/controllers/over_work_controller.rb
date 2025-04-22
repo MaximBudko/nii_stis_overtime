@@ -62,7 +62,9 @@ class OverWorkController < ApplicationController
   end
 
   def generate_ov_doc_rep
-    
+    user_ids = params[:user_ids] || []
+    @global_users_word = user_ids
+
   end
 
 

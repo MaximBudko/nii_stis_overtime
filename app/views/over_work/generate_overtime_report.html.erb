@@ -1,7 +1,6 @@
 <%= form_with url: do_generate_ov_path(format: :xlsx), method: :post, local: true do |j|%>
   <fieldset>
     <legend><strong>Выберите сотрудников:</strong></legend>
-
     <div id="user-checkboxes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;">
       <% User.active.sorted.each do |user| %>
         <div class="user-option">
@@ -15,19 +14,17 @@
   </fieldset>
 
   <fieldset style="margin-top: 20px;">
-    <legend><strong>Когда работы(выходные или буднии):</strong></legend>
-
+    <legend><strong>Когда работы (выходные или будни):</strong></legend>
     <label for="option_select">Выберите пункт:</label><br>
-    <%= select_tag :option_select, options_for_select([['В выходные', 'option_1'], ['В буднии', 'option_2']], params[:option_select]), include_blank: '--- Выберите ---' %>
+    <%= select_tag :option_select, options_for_select([['В выходные', 'option_1'], ['В будни', 'option_2']], params[:option_select]), include_blank: '--- Выберите ---' %>
   </fieldset>
 
   <fieldset style="margin-top: 20px;">
     <legend><strong>Диапазон дат:</strong></legend>
-
     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
       <div>
         <label for="start_date">Дата начала:</label><br>
-        <%= j.date_field 'start_date'%>
+        <%= j.date_field 'start_date' %>
       </div>
 
       <div>
@@ -39,8 +36,54 @@
 
   <br>
 
-  <%= j.submit "Сформировать отчёт", class: "button" %>
+  <%= j.submit "Сформировать отчёт (Excel)", class: "button" %>
 <% end %>
+
+<%= form_with url: generate_ov_doc_rep_path, method: :post, local: true, id: "docx-form" do |f| %>
+  <div id="docx-hidden-fields">
+    <!-- Сюда JS вставит скрытые поля -->
+  </div>
+
+ <!-- <%= f.submit "Сформировать служебную записку (Docx)", class: "button" %> --> 
+<% end %>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const docxForm = document.getElementById("docx-form");
+    const hiddenFieldsContainer = document.getElementById("docx-hidden-fields");
+
+    docxForm.addEventListener("submit", function(event) {
+      hiddenFieldsContainer.innerHTML = "";
+
+    
+      document.querySelectorAll(".user-checkbox:checked").forEach(cb => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "user_ids[]";
+        input.value = cb.value;
+        hiddenFieldsContainer.appendChild(input);
+      });
+
+      const startDate = document.querySelector("input[name='start_date']").value;
+      const endDate = document.querySelector("input[name='end_date']").value;
+
+      ["start_date", "end_date"].forEach(field => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = field;
+        input.value = document.querySelector(`input[name='${field}']`).value;
+        hiddenFieldsContainer.appendChild(input);
+      });
+
+      const optionInput = document.createElement("input");
+      optionInput.type = "hidden";
+      optionInput.name = "option_select";
+      optionInput.value = optionSelect;
+      hiddenFieldsContainer.appendChild(optionInput);
+    });
+  });
+</script>
 
 
 <style>

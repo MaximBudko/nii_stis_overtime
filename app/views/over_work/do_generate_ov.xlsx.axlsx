@@ -141,9 +141,9 @@ wb.add_worksheet(name: "Report") do |sheet|
             end
 
             if task_count > 1
-            merge_end = iterator - 1
-            sheet.merge_cells("A#{merge_start}:A#{merge_end}")
-            sheet.merge_cells("B#{merge_start}:B#{merge_end}")
+                merge_end = iterator - 1
+                sheet.merge_cells("A#{merge_start}:A#{merge_end}")
+                sheet.merge_cells("B#{merge_start}:B#{merge_end}")
             end
 
             serial_number += 1

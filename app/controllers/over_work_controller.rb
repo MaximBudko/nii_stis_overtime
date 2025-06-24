@@ -7,42 +7,47 @@ class OverWorkController < ApplicationController
   end
 
   def users_by_date
-    start_date = params[:start_date]
-    end_date = params[:end_date]
+    start_date = Date.parse(params[:start_date]) rescue nil
+    end_date = Date.parse(params[:end_date]) rescue nil
   
-    if start_date.blank? || end_date.blank?
-      render json: [] and return
+    if start_date.nil? || end_date.nil?
+      render json: [], status: :unprocessable_entity and return
     end
   
-    date_range = Date.parse(start_date)..Date.parse(end_date)
-  
-    # Находим кастомное поле "Тип работ"
     custom_field = TimeEntryCustomField.find_by(name: 'Тип работ')
-    unless custom_field
-      render json: [] and return
-    end
-  
-    # Получаем все трудозатраты с нужным типом работ
     overtime_entries = TimeEntry
-      .includes(:user)
       .joins(:custom_values)
-      .where(spent_on: date_range)
-      .where(custom_values: { custom_field_id: custom_field.id, value: 'Сверхурочная' })
+      .where(spent_on: start_date..end_date)
+      .where(custom_values: {
+        custom_field_id: custom_field.id,
+        value: 'Сверхурочная'
+      })
   
-    # Группируем по пользователям
-    user_entries = overtime_entries.group_by(&:user)
+    users_data = {}
   
-    # Формируем JSON
-    users_json = user_entries.map do |user, entries|
-      {
+    overtime_entries.each do |entry|
+      user = entry.user
+      users_data[user.id] ||= {
         id: user.id,
         name: "#{user.firstname} #{user.lastname}",
-        dates: entries.map(&:spent_on).uniq.sort.map(&:to_s)
+        entries: {}
+      }
+      date_str = entry.spent_on.to_s
+      users_data[user.id][:entries][date_str] ||= 0.0
+      users_data[user.id][:entries][date_str] += entry.hours
+    end
+  
+    result = users_data.values.map do |user|
+      {
+        id: user[:id],
+        name: user[:name],
+        entries: user[:entries].map { |date, hours| { date: date, hours: hours } }
       }
     end
   
-    render json: users_json
+    render json: result
   end
+  
   
   
 

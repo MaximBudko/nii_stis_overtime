@@ -1,107 +1,86 @@
-<%= form_with url: do_generate_ov_path(format: :xlsx), method: :post, local: true, id: 'main-form' do |f| %>
-  <fieldset style="margin-bottom: 20px;">
-    <legend><strong>Параметры фильтрации:</strong></legend>
-    <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end;">
+<%= form_with url: do_generate_ov_path(format: :xlsx), method: :post, local: true do |f| %>
+  <fieldset>
+    <legend><strong>Диапазон дат:</strong></legend>
+    <div style="display: flex; gap: 20px;">
       <div>
         <label>Дата начала:</label><br>
-        <%= f.date_field :start_date, id: 'start_date_picker' %>
+        <%= date_field_tag :start_date, nil, id: 'start_date_picker' %>
       </div>
-
       <div>
         <label>Дата окончания:</label><br>
-        <%= f.date_field :end_date, id: 'end_date_picker' %>
-      </div>
-
-      <div>
-        <label>Тип работ:</label><br>
-        <%= select_tag :work_type, options_for_select([['Все дни', 'all'], ['Будни', 'weekdays'], ['Выходные', 'weekends']]), id: 'work_type_select' %>
-      </div>
-
-      <div>
-        <button type="button" id="filter_button" class="button">🔄 Обновить сотрудников</button>
+        <%= date_field_tag :end_date, nil, id: 'end_date_picker' %>
       </div>
     </div>
   </fieldset>
 
-  <fieldset style="margin-bottom: 20px;">
-    <legend><strong>Сотрудники с трудозатратами:</strong></legend>
-    <div id="user_cards_container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
-      <!-- Карточки с чекбоксами вставятся через JS -->
-    </div>
-  </fieldset>
-
-  <fieldset style="margin-bottom: 20px;">
+  <fieldset style="margin-top: 20px;">
     <legend><strong>Тип отчета:</strong></legend>
     <%= select_tag :option_select, options_for_select([['В выходные', 'option_1'], ['В будни', 'option_2']]), include_blank: '--- Выберите ---' %>
   </fieldset>
 
-  <%= f.submit "📊 Сформировать Excel отчёт", class: "button", style: "margin-right: 10px;"%>
-<% end %>
+  <fieldset style="margin-top: 20px;">
+    <legend><strong>Сотрудники с "Сверхурочной" работой:</strong></legend>
+    <div id="user_cards_container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;"></div>
+  </fieldset>
 
-<%= form_with url: do_dokladnaya_path(format: :xlsx), method: :post, local: true, id: "docx-form" do |f| %>
-  <div id="docx-hidden-fields"></div>
-  <%= f.submit "📝 Сформировать служебную записку", class: "button" %>
+  <br>
+  <%= f.submit "Сформировать отчет (Excel)", class: "button submit-button" %>
 <% end %>
 
 <%= javascript_tag do %>
-  document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener('DOMContentLoaded', () => {
     const startInput = document.getElementById('start_date_picker');
     const endInput = document.getElementById('end_date_picker');
     const userContainer = document.getElementById('user_cards_container');
-
-    function getWeekdayName(dateStr) {
-      const days = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
-      const d = new Date(dateStr);
-      return days[d.getDay()];
-    }
 
     function fetchUsers() {
       const startDate = startInput.value;
       const endDate = endInput.value;
 
-      if (!startDate || !endDate) {
-        userContainer.innerHTML = '<p>Укажите обе даты</p>';
-        return;
-      }
+      if (!startDate || !endDate) return;
 
       fetch(`/overtime_report/users_by_date?start_date=${startDate}&end_date=${endDate}`, {
         headers: { 'Accept': 'application/json' }
       })
       .then(response => response.json())
-      .then(data => {
+      .then(users => {
         userContainer.innerHTML = '';
 
-        if (data.length === 0) {
-          userContainer.innerHTML = '<p>Нет пользователей с трудозатратами за выбранный период</p>';
+        if (users.length === 0) {
+          userContainer.innerHTML = '<p>Нет пользователей с "Сверхурочной" работой за выбранный период.</p>';
           return;
         }
 
-        data.forEach(user => {
-          const card = document.createElement('div');
+        users.forEach(user => {
+          const card = document.createElement('label');
           card.className = 'user-card';
+
+          const topLine = document.createElement('div');
+          topLine.className = 'top-line';
 
           const checkbox = document.createElement('input');
           checkbox.type = 'checkbox';
-          checkbox.id = `user_${user.id}`;
           checkbox.name = 'user_ids[]';
           checkbox.value = user.id;
 
-          const label = document.createElement('label');
-          label.setAttribute('for', checkbox.id);
-          label.textContent = user.name;
+          const name = document.createElement('span');
+          name.className = 'user-name';
+          name.textContent = user.name;
 
-          const dateList = document.createElement('ul');
-          dateList.className = 'date-list';
+          topLine.appendChild(checkbox);
+          topLine.appendChild(name);
 
-          user.dates.forEach(date => {
-            const item = document.createElement('li');
-            item.textContent = `${date} (${getWeekdayName(date)})`;
-            dateList.appendChild(item);
-          });
+          const dates = document.createElement('div');
+          dates.className = 'user-dates';
 
-          card.appendChild(checkbox);
-          card.appendChild(label);
-          card.appendChild(dateList);
+          dates.innerHTML = user.entries.map(entry => {
+            const d = new Date(entry.date);
+            const weekday = d.toLocaleDateString('ru-RU', { weekday: 'short' });
+            return `${d.toLocaleDateString()} (${weekday}) – ${entry.hours} ч`;
+          }).join('<br>');
+
+          card.appendChild(topLine);
+          card.appendChild(dates);
           userContainer.appendChild(card);
         });
       });
@@ -112,53 +91,54 @@
   });
 <% end %>
 
-
-
 <style>
-  .button {
-    background-color: #007bff !important;
-    color: white !important;
-    padding: 6px 12px !important;
-    border-radius: 4px !important;
-    border: none !important;
-    cursor: pointer !important;
-  }
-
-  .button:hover {
-    background-color: #0056b3 !important;
-  }
-
-    #user_cards_container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 12px;
-  }
-
   .user-card {
-    border: 1px solid #ccc;
-    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ddd;
     border-radius: 8px;
-    background-color: #f9f9f9;
-    font-size: 14px;
+    padding: 10px;
+    background: #f9f9f9;
+    cursor: pointer;
+    transition: background 0.2s ease;
   }
 
-  .user-card label {
-    font-weight: bold;
-    display: block;
+  .user-card:hover {
+    background: #eef;
+  }
+
+  .top-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 4px;
   }
 
-  .date-list {
-    margin: 6px 0 0 0;
-    padding-left: 18px;
-    font-size: 12px;
-    color: #555;
-    max-height: 100px;
-    overflow-y: auto;
+  .top-line input[type="checkbox"] {
+    margin: 0;
   }
 
-  .date-list li {
-    list-style-type: disc;
-    margin-bottom: 2px;
+  .user-name {
+    font-weight: bold;
+  }
+
+  .user-dates {
+    font-size: 12px;
+    color: #555;
+    margin-left: 22px;
+  }
+
+  .submit-button {
+    background-color: #0073e6 !important;
+    color: #fff !important;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .submit-button:hover {
+    background-color: #005bb5 !important;
   }
 </style>

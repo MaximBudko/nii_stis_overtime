@@ -49,12 +49,18 @@
     const endInput = document.getElementById('end_date_picker');
     const userContainer = document.getElementById('user_cards_container');
 
+    function getWeekdayName(dateStr) {
+      const days = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+      const d = new Date(dateStr);
+      return days[d.getDay()];
+    }
+
     function fetchUsers() {
       const startDate = startInput.value;
       const endDate = endInput.value;
 
       if (!startDate || !endDate) {
-        userContainer.innerHTML = '<p>Укажите диапазон дат</p>';
+        userContainer.innerHTML = '<p>Укажите обе даты</p>';
         return;
       }
 
@@ -66,13 +72,13 @@
         userContainer.innerHTML = '';
 
         if (data.length === 0) {
-          userContainer.innerHTML = '<p>Нет пользователей с трудозатратами за указанный период</p>';
+          userContainer.innerHTML = '<p>Нет пользователей с трудозатратами за выбранный период</p>';
           return;
         }
 
         data.forEach(user => {
           const card = document.createElement('div');
-          card.style = 'border: 1px solid #ccc; padding: 10px; border-radius: 6px; background: #f9f9f9; min-width: 200px;';
+          card.className = 'user-card';
 
           const checkbox = document.createElement('input');
           checkbox.type = 'checkbox';
@@ -82,22 +88,20 @@
 
           const label = document.createElement('label');
           label.setAttribute('for', checkbox.id);
-          label.style = 'margin-left: 5px; font-weight: bold;';
           label.textContent = user.name;
 
-          const info = document.createElement('div');
-          info.style = 'font-size: 0.8em; color: #666; margin-top: 4px;';
-          if (user.first_date) {
-            const dateObj = new Date(user.first_date);
-            const dayNames = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
-            const dayOfWeek = dayNames[dateObj.getDay()];
-            info.textContent = `${user.first_date} (${dayOfWeek})`;
-          }
+          const dateList = document.createElement('ul');
+          dateList.className = 'date-list';
+
+          user.dates.forEach(date => {
+            const item = document.createElement('li');
+            item.textContent = `${date} (${getWeekdayName(date)})`;
+            dateList.appendChild(item);
+          });
 
           card.appendChild(checkbox);
           card.appendChild(label);
-          card.appendChild(info);
-
+          card.appendChild(dateList);
           userContainer.appendChild(card);
         });
       });
@@ -107,6 +111,7 @@
     endInput.addEventListener('change', fetchUsers);
   });
 <% end %>
+
 
 
 <style>
@@ -121,5 +126,39 @@
 
   .button:hover {
     background-color: #0056b3 !important;
+  }
+
+    #user_cards_container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .user-card {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    font-size: 14px;
+  }
+
+  .user-card label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .date-list {
+    margin: 6px 0 0 0;
+    padding-left: 18px;
+    font-size: 12px;
+    color: #555;
+    max-height: 100px;
+    overflow-y: auto;
+  }
+
+  .date-list li {
+    list-style-type: disc;
+    margin-bottom: 2px;
   }
 </style>

@@ -7,41 +7,43 @@ class OverWorkController < ApplicationController
   end
 
   def users_by_date
-    start_date = Date.parse(params[:start_date]) rescue nil
-    end_date = Date.parse(params[:end_date]) rescue nil
+    start_date = params[:start_date]
+    end_date = params[:end_date]
   
-    return render json: [] unless start_date && end_date
+    if start_date.blank? || end_date.blank?
+      render json: [] and return
+    end
   
-    date_range = start_date..end_date
+    date_range = Date.parse(start_date)..Date.parse(end_date)
   
-    # Найдём кастомное поле "Тип работ"
-    work_type_field = TimeEntryCustomField.find_by(name: 'Тип работ')
-    return render json: [] unless work_type_field
+    # Находим кастомное поле "Тип работ"
+    custom_field = TimeEntryCustomField.find_by(name: 'Тип работ')
+    unless custom_field
+      render json: [] and return
+    end
   
-    # Найдём time_entries, у которых Тип работ = Сверхурочная и они попадают в диапазон
-    time_entries = TimeEntry.joins(:custom_values)
+    # Получаем все трудозатраты с нужным типом работ
+    overtime_entries = TimeEntry
+      .includes(:user)
+      .joins(:custom_values)
       .where(spent_on: date_range)
-      .where(custom_values: {
-        custom_field_id: work_type_field.id,
-        value: 'Сверхурочная'
-      })
+      .where(custom_values: { custom_field_id: custom_field.id, value: 'Сверхурочная' })
   
-    user_ids = time_entries.select(:user_id).distinct.pluck(:user_id)
-
+    # Группируем по пользователям
+    user_entries = overtime_entries.group_by(&:user)
   
-    users = User.where(id: user_ids)
-
-    user_data = users.map do |u|
-      entry = time_entries.find { |te| te.user_id == u.id }
+    # Формируем JSON
+    users_json = user_entries.map do |user, entries|
       {
-        id: u.id,
-        name: "#{u.firstname} #{u.lastname}",
-        first_date: entry&.spent_on&.to_s
+        id: user.id,
+        name: "#{user.firstname} #{user.lastname}",
+        dates: entries.map(&:spent_on).uniq.sort.map(&:to_s)
       }
     end
-
-    render json: user_data
+  
+    render json: users_json
   end
+  
   
 
   def do_generate_ov

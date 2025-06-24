@@ -26,7 +26,7 @@ wb.add_worksheet(name: "Report") do |sheet|
     rt2 = Axlsx::RichText.new
     rt.add_run('УТВЕРЖДАЮ')
     rt.add_run("\n")
-    rt.add_run('Директор ООО НИИ СТИС')
+    rt.add_run('Директор ООО НИИСТИС')
     rt.add_run("\n")
     rt.add_run(' ')
     rt.add_run("\n")

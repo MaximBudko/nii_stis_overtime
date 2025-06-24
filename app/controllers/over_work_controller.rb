@@ -86,7 +86,7 @@ class OverWorkController < ApplicationController
     respond_to do |format|
       format.xlsx do
         response.headers['Content-Disposition'] = 'attachment; filename=Отчет.xlsx'
-        render xlsx: 'Тест файл', template: 'over_work/do_generate_ov'
+        render xlsx: 'Отчет о сверхурочной работе', template: 'over_work/do_generate_ov'
       end
     end
   end

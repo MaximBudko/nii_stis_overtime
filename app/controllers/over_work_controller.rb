@@ -27,9 +27,20 @@ class OverWorkController < ApplicationController
       })
   
     user_ids = time_entries.select(:user_id).distinct.pluck(:user_id)
-    users = User.where(id: user_ids).select(:id, :firstname, :lastname)
+
   
-    render json: users.map { |u| { id: u.id, name: "#{u.firstname} #{u.lastname}" } }
+    users = User.where(id: user_ids)
+
+    user_data = users.map do |u|
+      entry = time_entries.find { |te| te.user_id == u.id }
+      {
+        id: u.id,
+        name: "#{u.firstname} #{u.lastname}",
+        first_date: entry&.spent_on&.to_s
+      }
+    end
+
+    render json: user_data
   end
   
 

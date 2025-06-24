@@ -1,105 +1,143 @@
-<%= form_with url: do_generate_ov_path(format: :xlsx), method: :post, local: true do |j|%>
-  <fieldset>
-    <legend><strong>Выберите сотрудников:</strong></legend>
-    <div id="user-checkboxes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;">
-      <% User.active.sorted.each do |user| %>
-        <div class="user-option">
-          <label>
-            <%= check_box_tag "user_ids[]", user.id, false, id: "user_#{user.id}", class: "user-checkbox" %>
-            <%= user.name %>
-          </label>
-        </div>
-      <% end %>
-    </div>
-  </fieldset>
-
-  <fieldset style="margin-top: 20px;">
-    <legend><strong>Когда работы (выходные или будни):</strong></legend>
-    <label for="option_select">Выберите пункт:</label><br>
-    <%= select_tag :option_select, options_for_select([['В выходные', 'option_1'], ['В будни', 'option_2']], params[:option_select]), include_blank: '--- Выберите ---' %>
-  </fieldset>
-
-  <fieldset style="margin-top: 20px;">
-    <legend><strong>Диапазон дат:</strong></legend>
-    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+<%= form_with url: do_generate_ov_path(format: :xlsx), method: :post, local: true, id: 'main-form' do |f| %>
+  <fieldset style="margin-bottom: 20px;">
+    <legend><strong>Параметры фильтрации:</strong></legend>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end;">
       <div>
-        <label for="start_date">Дата начала:</label><br>
-        <%= j.date_field 'start_date' %>
+        <label>Дата начала:</label><br>
+        <%= f.date_field :start_date, value: Date.today.beginning_of_month, id: 'start_date_picker' %>
       </div>
 
       <div>
-        <label for="end_date">Дата окончания:</label><br>
-        <%= j.date_field 'end_date' %>
+        <label>Дата окончания:</label><br>
+        <%= f.date_field :end_date, value: Date.today, id: 'end_date_picker' %>
+      </div>
+
+      <div>
+        <label>Тип работ:</label><br>
+        <%= select_tag :work_type, options_for_select([['Все дни', 'all'], ['Будни', 'weekdays'], ['Выходные', 'weekends']]), id: 'work_type_select' %>
+      </div>
+
+      <div>
+        <button type="button" id="filter_button" class="button">🔄 Обновить сотрудников</button>
       </div>
     </div>
   </fieldset>
 
-  <br>
+  <fieldset style="margin-bottom: 20px;">
+    <legend><strong>Сотрудники с трудозатратами:</strong></legend>
+    <div id="user_cards_container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+      <!-- Карточки с чекбоксами вставятся через JS -->
+    </div>
+  </fieldset>
 
-  <%= j.submit "Сформировать отчёт (Excel)", class: "button" %>
+  <fieldset style="margin-bottom: 20px;">
+    <legend><strong>Тип отчета:</strong></legend>
+    <%= select_tag :option_select, options_for_select([['В выходные', 'option_1'], ['В будни', 'option_2']]), include_blank: '--- Выберите ---' %>
+  </fieldset>
+
+  <%= f.submit "📊 Сформировать Excel отчёт", class: "button", style: "margin-right: 10px;"%>
 <% end %>
 
-<%= form_with url: generate_ov_doc_rep_path, method: :post, local: true, id: "docx-form" do |f| %>
-  <div id="docx-hidden-fields">
-    <!-- Сюда JS вставит скрытые поля -->
-  </div>
-
- <!-- <%= f.submit "Сформировать служебную записку (Docx)", class: "button" %> --> 
+<%= form_with url: do_dokladnaya_path(format: :xlsx), method: :post, local: true, id: "docx-form" do |f| %>
+  <div id="docx-hidden-fields"></div>
+  <%= f.submit "📝 Сформировать служебную записку", class: "button" %>
 <% end %>
 
+<%= javascript_tag do %>
+  document.addEventListener('DOMContentLoaded', function () {
+    const startInput = document.getElementById('start_date_picker');
+    const endInput = document.getElementById('end_date_picker');
+    const typeSelect = document.getElementById('work_type_select');
+    const filterButton = document.getElementById('filter_button');
+    const userContainer = document.getElementById('user_cards_container');
+    const docxHidden = document.getElementById('docx-hidden-fields');
+    const mainForm = document.getElementById('main-form');
+    const docxForm = document.getElementById('docx-form');
 
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const docxForm = document.getElementById("docx-form");
-    const hiddenFieldsContainer = document.getElementById("docx-hidden-fields");
+    function loadUsers() {
+      const start = startInput.value;
+      const end = endInput.value;
+      const workType = typeSelect.value;
 
-    docxForm.addEventListener("submit", function(event) {
-      hiddenFieldsContainer.innerHTML = "";
+      if (!start || !end) {
+        alert('Укажите обе даты');
+        return;
+      }
 
-    
-      document.querySelectorAll(".user-checkbox:checked").forEach(cb => {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = "user_ids[]";
-        input.value = cb.value;
-        hiddenFieldsContainer.appendChild(input);
+      fetch(`/overtime_report/users_by_date?start_date=${start}&end_date=${end}&work_type=${workType}`, {
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        userContainer.innerHTML = '';
+
+        if (data.length === 0) {
+          userContainer.innerHTML = '<p>Нет сотрудников с трудозатратами по условиям</p>';
+          return;
+        }
+
+        data.forEach(user => {
+          const card = document.createElement('div');
+          card.style = 'border: 1px solid #ccc; padding: 10px; border-radius: 6px; background: #f9f9f9; min-width: 150px;';
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.id = `user_${user.id}`;
+          checkbox.name = 'user_ids[]';
+          checkbox.value = user.id;
+
+          const label = document.createElement('label');
+          label.setAttribute('for', checkbox.id);
+          label.textContent = user.name;
+          label.style = 'margin-left: 5px;';
+
+          card.appendChild(checkbox);
+          card.appendChild(label);
+          userContainer.appendChild(card);
+        });
+      });
+    }
+
+    filterButton.addEventListener('click', loadUsers);
+    loadUsers();
+
+    // Копируем выбранные чекбоксы и параметры в форму служебки
+    docxForm.addEventListener('submit', function (e) {
+      docxHidden.innerHTML = '';
+
+      document.querySelectorAll('#main-form input[name="user_ids[]"]:checked').forEach(input => {
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'user_ids[]';
+        hidden.value = input.value;
+        docxHidden.appendChild(hidden);
       });
 
-      const startDate = document.querySelector("input[name='start_date']").value;
-      const endDate = document.querySelector("input[name='end_date']").value;
-
-      ["start_date", "end_date"].forEach(field => {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = field;
-        input.value = document.querySelector(`input[name='${field}']`).value;
-        hiddenFieldsContainer.appendChild(input);
+      ['start_date', 'end_date', 'option_select'].forEach(name => {
+        const value = document.querySelector(`#main-form [name="${name}"]`)?.value;
+        if (value) {
+          const hidden = document.createElement('input');
+          hidden.type = 'hidden';
+          hidden.name = name;
+          hidden.value = value;
+          docxHidden.appendChild(hidden);
+        }
       });
-
-      const optionInput = document.createElement("input");
-      optionInput.type = "hidden";
-      optionInput.name = "option_select";
-      optionInput.value = optionSelect;
-      hiddenFieldsContainer.appendChild(optionInput);
     });
   });
-</script>
-
+<% end %>
 
 <style>
-  .user-option {
-    padding: 4px;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
+  .button {
+    background-color: #007bff !important;
+    color: white !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    cursor: pointer !important;
   }
 
-  .user-option:hover {
-    background-color: #f0f0f0;
-  }
-
-  .user-checkbox:checked + span,
-  .user-option input[type="checkbox"]:checked + label {
-    font-weight: bold;
-    color: #2a2;
+  .button:hover {
+    background-color: #0056b3 !important;
   }
 </style>

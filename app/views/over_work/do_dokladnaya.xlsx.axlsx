@@ -1,0 +1,85 @@
+require 'set'
+
+
+wb = xlsx_package.workbook 
+ 
+#Стили к таблицам
+s = wb.styles
+document_title = s.add_style alignment: {horizontal: :center, wrap_text: true}, font_name: 'Times New Roman', sz: 14, b: true
+wrap_importer = s.add_style alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman' 
+title_main_text = s.add_style alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
+main_text_in_body = s.add_style sz: 12, alignment: {horizontal: :justify, vertical: :center, wrap_text: :true}, font_name: 'Times New Roman'
+
+issues = Issue.all
+users = User.all
+
+job_title_field = CustomField.find_by(name: 'job_title')
+
+wb.add_worksheet(name: "Dokladnaya") do |sheet|
+    rt = Axlsx::RichText.new
+    rt.add_run('Общество с ограниченной ответственностью')
+    rt.add_run("\n")
+    rt.add_run('Научно-исследовательский институт')
+    rt.add_run("\n")
+    rt.add_run('Сложных телекоммуникационных и информационных систем')
+    rt.add_run("\n")
+    rt.add_run('(ООО НИИСТИС)')
+
+    sheet.add_row [rt, "", "", ""], style: document_title
+    sheet.merge_cells("A1:D1")
+    sheet.add_row ["", "", "", ""]
+
+    rt_left_with_date = Axlsx::RichText.new
+    rt_right = Axlsx::RichText.new
+
+    td_date = Date.today
+    td_date_formated = td_date.strftime('%d/%m/%Y')
+
+    rt_left_with_date.add_run('Управление по научно-технической работе', alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
+    rt_left_with_date.add_run("\n", alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
+    rt_left_with_date.add_run(' ', alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
+    rt_left_with_date.add_run("\n", alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
+    rt_left_with_date.add_run("#{td_date_formated} г.", alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, underline: :single, sz: 12, font_name: 'Times New Roman')
+    rt_left_with_date.add_run("\n", alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
+    rt_left_with_date.add_run(' ', alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
+    rt_left_with_date.add_run("\n", alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
+    rt_left_with_date.add_run('О привлечении к сверхурочным работам', alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, i: true, font_name: 'Times New Roman')
+
+    rt_right.add_run('Директору', alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
+    rt_right.add_run("\n", alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
+    rt_right.add_run('ООО НИИСТИС', alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
+    rt_right.add_run("\n", alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
+    rt_right.add_run('Ф.В. Петрову', alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
+
+    sheet.add_row [rt_left_with_date, "" , rt_right, ""], style: wrap_importer
+    sheet.merge_cells("C3:D3")
+    sheet.merge_cells("A3:B3")
+    sheet.add_row ["", "", "", ""]
+    sheet.add_row ["", "", "", ""]
+    sheet.add_row ["", "", "", ""]
+    sheet.add_row ["", "", "", ""]
+    sheet.add_row ["", "", "", ""]
+    sheet.add_row ["", "", "", ""]
+    sheet.add_row ["", "", "", ""]
+    sheet.add_row ["Докладная записка", "", "", ""], style: title_main_text
+    sheet.add_row ["", "", "", ""]
+    sheet.merge_cells("A11:D11")
+
+    tp_wrk = ""
+    if @global_type_overwork == "option_1"
+        tp_wrk = "работе в выходные дни"
+    else
+        tp_wrk = "сверхурочным работам"
+    end
+
+    sheet.add_row [
+        "   В связи с производственной необходимостью и ввиду большого объема текущих работ, прошу привлечь к #{tp_wrk} следующих работников:",
+        "",
+        "",
+        ""
+    ], style: main_text_in_body
+
+    sheet.merge_cells("A13:D13")
+    sheet.column_widths 4, 47, 30, 8
+    
+end

@@ -77,6 +77,20 @@ wb.add_worksheet(name: "Report") do |sheet|
         if tp_wrk == "о проделанной работе сотрудников за выходные дни"
             if date_todo.saturday? || date_todo.sunday?
                 if entries.exists? 
+
+                    check_entries = TimeEntry
+                        .joins(:custom_values)
+                        .where(
+                            spent_on: date_todo,
+                            user_id: users_loop.map(&:id)
+                        )
+                        .where(custom_values: {
+                            custom_field_id: custom_field.id,
+                            value: 'Сверхурочная'
+                        })
+
+                    next unless check_entries.exists?
+
                     sheet.add_row ["#{date_todo.strftime("%d.%m.%Y")} г. (#{I18n.l(date_todo, format: "%A")})", "", "", ""], style: table_title2
                     sheet.merge_cells("A#{iterator}:D#{iterator}")
                     iterator += 1
@@ -173,7 +187,24 @@ wb.add_worksheet(name: "Report") do |sheet|
             if date_todo.saturday? || date_todo.sunday?
                 next
             else
-                if entries.exists? 
+                if entries.exists?
+
+
+                    check_entries = TimeEntry
+                        .joins(:custom_values)
+                        .where(
+                            spent_on: date_todo,
+                            user_id: users_loop.map(&:id)
+                        )
+                        .where(custom_values: {
+                            custom_field_id: custom_field.id,
+                            value: 'Сверхурочная'
+                        })
+
+                    next unless check_entries.exists?
+
+
+
                     sheet.add_row ["#{date_todo.strftime("%d.%m.%Y")} г. (#{I18n.l(date_todo, format: "%A")})", "", "", ""], style: table_title2
                     sheet.merge_cells("A#{iterator}:D#{iterator}")
                     iterator += 1

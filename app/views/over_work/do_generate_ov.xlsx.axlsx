@@ -41,8 +41,8 @@ wb.add_worksheet(name: "Report") do |sheet|
     rt.add_run("«_____» ___________ #{current_year} г.")
     sheet.add_row ["","",rt, ""],height: 80, style: header
 
-    sheet.merge_cells("C1:D1")
-    sheet.add_row ["", "", "", ""] 
+    sheet.merge_cells("C1:E1")
+    sheet.add_row ["", "", "", "",""] 
 
     tp_wrk = ""
 
@@ -52,13 +52,13 @@ wb.add_worksheet(name: "Report") do |sheet|
         tp_wrk = "о проделанной сверхурочной работе сотрудников"
     end
 
-    sheet.add_row ["Отчет #{tp_wrk}", "", "", ""], style: table_title1
-    sheet.merge_cells("A3:D3")
-    sheet.add_row ["Дата", "", "", ""], style: table_title2
-    sheet.merge_cells("A4:D4")
-    sheet.add_row ["Наименование подразделения", "", "", ""], style: table_title2
-    sheet.merge_cells("A5:D5")
-    sheet.add_row ["№ п/п", "Должность ФИО работника", "Проделанная работа", "Время работы"], style: table_title2
+    sheet.add_row ["Отчет #{tp_wrk}", "", "", "", ""], style: table_title1
+    sheet.merge_cells("A3:E3")
+    sheet.add_row ["Дата", "", "", "",""], style: table_title2
+    sheet.merge_cells("A4:E4")
+    sheet.add_row ["Наименование подразделения", "", "", "", ""], style: table_title2
+    sheet.merge_cells("A5:E5")
+    sheet.add_row ["№ п/п", "Должность ФИО работника", "Проект", "Проделанная работа", "Время работы"], style: table_title2
     users_loop = User.find(@global_user_ids)
     iterator = 7
     vertical_merge_iterator = 0
@@ -91,8 +91,8 @@ wb.add_worksheet(name: "Report") do |sheet|
 
                     next unless check_entries.exists?
 
-                    sheet.add_row ["#{date_todo.strftime("%d.%m.%Y")} г. (#{I18n.l(date_todo, format: "%A")})", "", "", ""], style: table_title2
-                    sheet.merge_cells("A#{iterator}:D#{iterator}")
+                    sheet.add_row ["#{date_todo.strftime("%d.%m.%Y")} г. (#{I18n.l(date_todo, format: "%A")})", "", "", "", ""], style: table_title2
+                    sheet.merge_cells("A#{iterator}:E#{iterator}")
                     iterator += 1
                     #-----------------------Обработка групп, пользователей, задач
                     printed_groups_by_date = Hash.new { |hash, key| hash[key] = Set.new }
@@ -126,8 +126,8 @@ wb.add_worksheet(name: "Report") do |sheet|
 
 
                             unless printed_groups_by_date[date_todo].include?(group_name)
-                                sheet.add_row ["#{group_name}", "", "", ""], style: group_title
-                                sheet.merge_cells("A#{iterator}:D#{iterator}")
+                                sheet.add_row ["#{group_name}", "", "", "", ""], style: group_title
+                                sheet.merge_cells("A#{iterator}:E#{iterator}")
                                 printed_groups_by_date[date_todo] << group_name
                                 iterator += 1
                                 vertical_merge_iterator = iterator
@@ -160,9 +160,10 @@ wb.add_worksheet(name: "Report") do |sheet|
                                     sheet.add_row [
                                         "#{serial}",
                                         "#{custom_field_users_job_title}\n#{user.firstname.to_s[0]}.#{custom_field_users_surname.to_s[0]}. #{user.lastname}",
+                                        "#{issue.project.name}",
                                         "#{issue.description}",
                                         "#{formatted_time}"
-                                    ], style: [issue_iter, issues_row, issues_row, estimate_issue_row]
+                                    ], style: [issue_iter,issues_row , issues_row, issues_row, estimate_issue_row]
                                     iterator += 1
                                 end
 
@@ -205,8 +206,8 @@ wb.add_worksheet(name: "Report") do |sheet|
 
 
 
-                    sheet.add_row ["#{date_todo.strftime("%d.%m.%Y")} г. (#{I18n.l(date_todo, format: "%A")})", "", "", ""], style: table_title2
-                    sheet.merge_cells("A#{iterator}:D#{iterator}")
+                    sheet.add_row ["#{date_todo.strftime("%d.%m.%Y")} г. (#{I18n.l(date_todo, format: "%A")})", "", "", "", ""], style: table_title2
+                    sheet.merge_cells("A#{iterator}:E#{iterator}")
                     iterator += 1
                     #-----------------------Обработка групп, пользователей, задач
                     printed_groups_by_date = Hash.new { |hash, key| hash[key] = Set.new }
@@ -240,8 +241,8 @@ wb.add_worksheet(name: "Report") do |sheet|
 
 
                             unless printed_groups_by_date[date_todo].include?(group_name)
-                                sheet.add_row ["#{group_name}", "", "", ""], style: group_title
-                                sheet.merge_cells("A#{iterator}:D#{iterator}")
+                                sheet.add_row ["#{group_name}", "", "", "",""], style: group_title
+                                sheet.merge_cells("A#{iterator}:E#{iterator}")
                                 printed_groups_by_date[date_todo] << group_name
                                 iterator += 1
                                 vertical_merge_iterator = iterator
@@ -274,9 +275,10 @@ wb.add_worksheet(name: "Report") do |sheet|
                                     sheet.add_row [
                                         "#{serial}",
                                         "#{custom_field_users_job_title}\n#{user.firstname.to_s[0]}.#{custom_field_users_surname.to_s[0]}. #{user.lastname}",
+                                        "#{issue.project.name}",
                                         "#{issue.description}",
                                         "#{formatted_time}"
-                                    ], style: [issue_iter, issues_row, issues_row, estimate_issue_row]
+                                    ], style: [issue_iter, issues_row, issues_row, issues_row, estimate_issue_row]
                                     iterator += 1
                                 end
 
@@ -303,20 +305,20 @@ wb.add_worksheet(name: "Report") do |sheet|
     sheet.add_row [""]
     sheet.add_row [""]
     sheet.add_row ["Согласовано:"], style: signature
-    sheet.add_row ["Начальник УНТР __________________ Д.С. Бикзигитов", "", "", ""], style: signature
-    sheet.merge_cells("A#{iterator}:D#{iterator}")
+    sheet.add_row ["Начальник УНТР __________________ Д.С. Бикзигитов", "", "", "", ""], style: signature
+    sheet.merge_cells("A#{iterator}:E#{iterator}")
     iterator += 1   
     sheet.add_row [""]
     iterator += 1
-    sheet.add_row ["С отчетом ознакомлены:", "", "", ""], style: signature
-    sheet.merge_cells("A#{iterator}:D#{iterator}")
+    sheet.add_row ["С отчетом ознакомлены:", "", "", "", ""], style: signature
+    sheet.merge_cells("A#{iterator}:E#{iterator}")
     iterator += 1
     users_loop.each do |usr|
         custom_field_users_surname = usr.custom_field_values.detect {|cf| cf.custom_field.name == 'surname'}
-        sheet.add_row ["#{usr.firstname.to_s[0]}.#{custom_field_users_surname.to_s[0]}. #{usr.lastname}________________", ""], style: signature
-        sheet.merge_cells("A#{iterator}:D#{iterator}")
+        sheet.add_row ["#{usr.firstname.to_s[0]}.#{custom_field_users_surname.to_s[0]}. #{usr.lastname}________________", "", ""], style: signature
+        sheet.merge_cells("A#{iterator}:E#{iterator}")
         iterator += 1
     end
 
-    sheet.column_widths 4, 30, 47, 8
+    sheet.column_widths 4, 30,  47, 47, 8
 end

@@ -57,6 +57,7 @@ class OverWorkController < ApplicationController
     start_date_str = params[:start_date]
     end_date_str = params[:end_date]
     type_overwork = params[:option_select]
+    report_type = params[:report_type]
 
     @global_type_overwork = type_overwork.to_s
 
@@ -102,16 +103,25 @@ class OverWorkController < ApplicationController
     end
 
     respond_to do |format|
-      format.xlsx do
-        response.headers['Content-Disposition'] = 'attachment; filename=Отчет.xlsx'
-        render xlsx: 'Отчет о сверхурочной работе', template: 'over_work/do_generate_ov'
+
+
+      if report_type == "dokladnaya"
+        format.xlsx do
+          response.headers['Content-Disposition'] = 'attachment; filename=Докладная.xlsx'
+          render xlsx: 'Докладная', template: 'over_work/do_dokladnaya'
+        end
+      else
+        format.xlsx do
+          response.headers['Content-Disposition'] = 'attachment; filename=Отчет.xlsx'
+          render xlsx: 'Отчет о сверхурочной работе', template: 'over_work/do_generate_ov'
+        end
       end
     end
   end
 
 
   # def do_dokladnaya
-  #   user_ids = params[:user_ids] || []
+  # user_ids = params[:user_ids] || []
   #   @global_user_ids = user_ids
   #   start_date_str = params[:start_date]
   #   end_date_str = params[:end_date]
@@ -119,7 +129,6 @@ class OverWorkController < ApplicationController
 
   #   @global_type_overwork_dokladnaya = type_overwork_dokladnaya.to_s
     
-  #   p @global_type_overwork_dokladnaya
 
   #   if user_ids.blank?
   #     flash[:error] = "Пользователи не выбраны"
@@ -157,15 +166,10 @@ class OverWorkController < ApplicationController
   #   @overtime_issues = entries.map(&:issue).compact.uniq
   #   @users = User.where(id: user_ids)
 
-  #   if @overtime_issues.blank?
-  #     flash[:error] = "У выбранных пользователей нет задач с типом работ 'Сверхурочная' за выбранный период."
-  #     redirect_to action: :generate_overtime_report and return
-  #   end
-
   #   respond_to do |format|
   #     format.xlsx do
   #       response.headers['Content-Disposition'] = 'attachment; filename=Отчет.xlsx'
-  #       render xlsx: 'do_dokladnaya', template: 'over_work/do_dokladnaya'
+  #       render xlsx: 'Докладная записка', template: 'over_work/do_dokladnaya'
   #     end
   #   end
   # end

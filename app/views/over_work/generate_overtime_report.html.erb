@@ -24,7 +24,15 @@
   </fieldset>
 
   <br>
-  <%= f.submit "🚀 Сформировать отчет (Excel) 🚀", class: "button submit-button" %>
+  <div style="margin-top: 20px;">
+    <%= button_tag(type: "submit", name: "report_type", value: "excel", class: "submit-button") do %>
+        📊 Сформировать отчет (Excel)
+    <% end %>
+    <%= button_tag(type: "submit", name: "report_type", value: "dokladnaya", class: "submit-button") do %>
+        📄 Сформировать Докладную
+    <% end %>
+  </div>
+
 <% end %>
 
 <%= javascript_tag do %>
@@ -92,6 +100,7 @@
 <% end %>
 
 <style>
+
   .user-card {
     display: flex;
     flex-direction: column;
@@ -131,11 +140,13 @@
   .submit-button {
     background-color: #0073e6 !important;
     color: #fff !important;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: none;
-    font-weight: bold;
-    cursor: pointer;
+    height: 50px !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    border: none !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
   }
 
   .submit-button:hover {

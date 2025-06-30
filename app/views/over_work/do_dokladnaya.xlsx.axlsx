@@ -79,7 +79,95 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
         ""
     ], style: main_text_in_body
 
+
+    
     sheet.merge_cells("A13:D13")
+
+    @date_range_overtime.each do |date_todo|
+        custom_field = TimeEntryCustomField.find_by(name: 'Тип работ')
+                entries = TimeEntry
+            .joins(:custom_values)
+            .where(spent_on: date_todo)
+            .where(custom_values: {
+            custom_field_id: custom_field.id,
+            value: 'Сверхурочная'
+        })
+        
+        if tp_wrk == "о проделанной работе сотрудников за выходные дни"
+            if date_todo.saturday? || date_todo.sunday?
+                check_entries = TimeEntry
+                .joins(:custom_values)
+                .where(
+                    spent_on: date_todo,
+                    user_id: users_loop.map(&:id)
+                )
+                .where(custom_values: {
+                    custom_field_id: custom_field.id,
+                    value: 'Сверхурочная'
+                })
+
+                next unless check_entries.exists?
+
+                sheet.add_row ["#{date_todo.strftime("%d.%m.%Y")} г. (#{I18n.l(date_todo, format: "%A")})", "", "", ""]
+                printed_groups_by_date = Hash.new { |hash, key| hash[key] = Set.new }
+                selected_users = User.find(@global_user_ids)
+                selected_users.each do |user|
+                    custom_field_users_surname = user.custom_field_values.detect {|cf| cf.custom_field.name == 'surname'}
+                    custom_field_users_job_title = user.custom_field_values.detect {|cf| cf.custom_field.name == 'job_title'}
+
+                    group = user.groups
+
+                    group.each do |user_group|
+                        time_entries = TimeEntry
+                            .joins(:custom_values)
+                            .where(user_id: user.id, spent_on: date_todo)
+                            .where(custom_values: {
+                            custom_field_id: custom_field.id,
+                            value: 'Сверхурочная'
+                        })
+
+                        group_name = user_group.to_s
+                        issues = Issue.where(id: time_entries.pluck(:issue_id).uniq)
+                        if issues == []
+                            next
+                        end 
+
+                        issues.group_by(&:assigned_to).each do |owner, owner_issues|
+                            next if owner.nil?
+
+                            merge_start = iterator
+
+                            task_count = owner_issues.size
+
+
+                            owner_issues.each_with_index do |issue, idx|
+
+                                sheet.add_row [
+                                    "#{issue.project.name}",
+                                    "#{custom_field_users_job_title}\n#{user.firstname.to_s[0]}.#{custom_field_users_surname.to_s[0]}. #{user.lastname}",
+                                    "#{issue.description}",
+                                    ""
+                                ]
+                            end
+
+
+
+                        end
+                    end
+                end
+
+
+            else
+                next
+            end
+        else
+            next
+        end
+
+
+    end
+
+
     sheet.column_widths 4, 47, 30, 8
     
 end

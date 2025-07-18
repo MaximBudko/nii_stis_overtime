@@ -81,6 +81,7 @@ class OverWorkController < ApplicationController
 
     date_range = (start_date..end_date).to_a
     @date_range_overtime = date_range
+    @date_range_overtime2 = date_range
 
     custom_field = TimeEntryCustomField.find_by(name: 'Тип работ')
 
@@ -118,62 +119,7 @@ class OverWorkController < ApplicationController
       end
     end
   end
-
-
-  # def do_dokladnaya
-  # user_ids = params[:user_ids] || []
-  #   @global_user_ids = user_ids
-  #   start_date_str = params[:start_date]
-  #   end_date_str = params[:end_date]
-  #   type_overwork_dokladnaya = params[:option_select]
-
-  #   @global_type_overwork_dokladnaya = type_overwork_dokladnaya.to_s
-    
-
-  #   if user_ids.blank?
-  #     flash[:error] = "Пользователи не выбраны"
-  #     redirect_to action: :generate_overtime_report and return 
-  #   end
-
-  #   if start_date_str.blank?
-  #     flash[:error] = "Укажите дату начала"
-  #     redirect_to action: :generate_overtime_report and return 
-  #   end
-
-  #   if end_date_str.blank?
-  #     flash[:error] = "Укажите дату окончания"
-  #     redirect_to action: :generate_overtime_report and return 
-  #   end 
-
-  #   start_date = Date.parse(start_date_str)
-  #   end_date = Date.parse(end_date_str)
-
-  #   date_range = (start_date..end_date).to_a
-  #   @date_range_overtime = date_range
-
-  #   custom_field = TimeEntryCustomField.find_by(name: 'Тип работ')
-
-  #   entries = TimeEntry
-  #     .includes(:issue)
-  #     .joins(:custom_values)
-  #     .where(user_id: user_ids)
-  #     .where(spent_on: date_range)
-  #     .where(custom_values: {
-  #       custom_field_id: custom_field.id,
-  #       value: 'Сверхурочная'
-  #     })
-
-  #   @overtime_issues = entries.map(&:issue).compact.uniq
-  #   @users = User.where(id: user_ids)
-
-  #   respond_to do |format|
-  #     format.xlsx do
-  #       response.headers['Content-Disposition'] = 'attachment; filename=Отчет.xlsx'
-  #       render xlsx: 'Докладная записка', template: 'over_work/do_dokladnaya'
-  #     end
-  #   end
-  # end
-  
+ 
   private
 
   def load_form_data

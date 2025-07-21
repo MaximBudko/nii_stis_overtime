@@ -3,7 +3,10 @@ require 'tempfile'
 
 class OverWorkController < ApplicationController
   def generate_overtime_report
-
+    @users = User.active.includes(:custom_values, :groups)
+    @projects = Project.where(parent_id: nil)
+    @cf_job_title = UserCustomField.find_by(name: 'job_title')
+    @cf_surname   = UserCustomField.find_by(name: 'surname')
   end
 
   def users_by_date
@@ -84,7 +87,7 @@ class OverWorkController < ApplicationController
     @date_range_overtime2 = date_range
 
     custom_field = TimeEntryCustomField.find_by(name: 'Тип работ')
-
+    
     entries = TimeEntry
       .includes(:issue)
       .joins(:custom_values)
@@ -120,6 +123,25 @@ class OverWorkController < ApplicationController
     end
   end
  
+
+  def query_constructor
+    @report_data = JSON.parse(params[:report_data])
+    @type_overwork_modal = params[:option_select_modal]
+    
+    # Вывод в лог для проверки
+    Rails.logger.info("Полученные данные:")
+    Rails.logger.info(@report_data.inspect)
+
+    # Тут логика по обработке массива
+    respond_to do |format|
+      format.xlsx do
+        response.headers['Content-Disposition'] = 'attachment; filename=Докладная.xlsx'
+        render xlsx: 'Докладная', template: 'over_work/query_constructor'
+      end
+    end
+  end
+
+
   private
 
   def load_form_data

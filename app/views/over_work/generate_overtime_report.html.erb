@@ -24,7 +24,7 @@
   </fieldset>
 
   <br>
-  <div style="margin-top: 20px;">
+  <div style="margin-top: 20px; margin-right: 20px;">
     <%= button_tag(type: "submit", name: "report_type", value: "excel", class: "submit-button") do %>
         📊 Сформировать отчет (Excel)
     <% end %>
@@ -32,6 +32,56 @@
         📄 Сформировать Докладную
     <% end %>
   </div>
+<% end %>
+
+<!-- Модальное окно и форма -->
+
+<%= form_with url: query_constructor_path(format: :xlsx), method: :post, local: true do |l| %>
+  <div style="margin-top: 5px; width: 492px; height: 52px;" >
+    <%= hidden_field_tag :report_data, "", id: "report-data-field" %>
+    <%= button_tag(type: "button", class: "submit-button-construct", id: "open-modal-btn") do %>
+      Открыть конструктор Докладной
+    <% end %>
+  </div>
+
+<div id="modal-overlay" style="display:none;"></div>
+
+<div id="modal-card" style="display:none;">
+  <h3>Конструктор Докладной</h3>
+
+  <div class="modal-buttons">
+    <%= button_tag "Добавить пользователя", type: "button", id: "add-row-btn", class: "button" %>
+    <%= button_tag "Удалить", type: "button", id: "remove-row-btn", class: "button" %>
+    <%= select_tag :option_select_modal, options_for_select([['В выходные', 'option_1'], ['В будни', 'option_2']]), include_blank: '--- Выберите ---' %>
+  </div>
+
+  <table id="user-table" class="list">
+    <thead>
+      <tr>
+        <th>Активен</th>
+        <th>Пользователь</th>
+        <th>Отдел</th>
+        <th>Должность</th>
+        <th>Дата</th>
+        <th>Проект</th>
+      </tr>
+    </thead>
+    <tbody>
+      <datalist id="user-datalist">
+      <% @users.each do |u| %>
+      <% surname = u.custom_field_value(@cf_surname).to_s %>
+      <% short_name = "#{u.firstname.first}.#{surname.first}. #{u.lastname}" %>
+      <option value="<%= short_name %>">
+      <% end %>
+      </datalist>
+      <!-- строки добавляются JS-ом -->
+    </tbody>
+  </table>
+
+  <%= button_tag "Отправить", type: "button", id: "submit-btn", class: "button" %>
+</div>
+
+
 
 <% end %>
 
@@ -136,6 +186,22 @@
     color: #555;
     margin-left: 22px;
   }
+  .submit-button-construct {
+    background-color: #0073e6 !important;
+    color: #fff !important;
+    padding: 8px 16px !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    border-radius: 6px !important;
+    border: none !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+  }
+  .submit-button-construct:hover {
+    background-color: #005bb5 !important;
+  }
 
   .submit-button {
     background-color: #0073e6 !important;
@@ -152,4 +218,187 @@
   .submit-button:hover {
     background-color: #005bb5 !important;
   }
+
+  #modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+  #modal-card {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    z-index: 1000;
+    max-width: 90%;
+    width: 960px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    border-radius: 4px;
+  }
+  .modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin: 10px 0;
+  }
+  table.list select,
+  table.list input[type="text"],
+  table.list input[type="date"] {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  input.expandable {
+  transition: width 0.2s ease;
+  width: 100%;
+  max-width: 300px;
+}
 </style>
+
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const openBtn = document.getElementById("open-modal-btn");
+    const overlay = document.getElementById("modal-overlay");
+    const modal = document.getElementById("modal-card");
+    const addRowBtn = document.getElementById("add-row-btn");
+    const removeRowBtn = document.getElementById("remove-row-btn");
+    const submitBtn = document.getElementById("submit-btn");
+    const tableBody = document.querySelector("#user-table tbody");
+
+    <%
+      users_json = @users.map do |u|
+        surname  = u.custom_field_value(@cf_surname).to_s
+        job_title = u.custom_field_value(@cf_job_title).to_s
+        short_name = "#{u.firstname.first}.#{surname.first}. #{u.lastname}"
+
+        {
+          id: u.id,
+          name: short_name,
+          department: u.groups.first&.name || '',
+          job_title: job_title
+        }
+      end
+    %>
+
+    const users = <%= raw users_json.to_json %>;
+
+
+    const projects = <%= raw @projects.map { |p| { id: p.id, name: p.name } }.to_json %>;
+
+    openBtn.addEventListener("click", () => {
+      overlay.style.display = "block";
+      modal.style.display = "block";
+    });
+
+    overlay.addEventListener("click", () => {
+      overlay.style.display = "none";
+      modal.style.display = "none";
+    });
+
+    removeRowBtn.addEventListener("click", () => {
+      if (tableBody.rows.length > 0) tableBody.deleteRow(-1);
+    });
+
+      addRowBtn.addEventListener("click", () => {
+        const row = tableBody.insertRow();
+
+        // 1. Чекбокс
+        const checkboxCell = row.insertCell();
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = true;
+        checkboxCell.appendChild(checkbox);
+
+        // 2. Пользователь (поиск по фамилии)
+        const userCell = row.insertCell();
+        const userInput = document.createElement("input");
+        userInput.setAttribute("list", "user-datalist");
+        userInput.className = "text user-search";
+        userInput.placeholder = "Введите фамилию";
+        userCell.appendChild(userInput);
+
+        // Храним ID выбранного пользователя (спрятанное поле)
+        const hiddenUserId = document.createElement("input");
+        hiddenUserId.type = "hidden";
+        userCell.appendChild(hiddenUserId);
+
+        // 3. Отдел
+        const deptCell = row.insertCell();
+        const deptInput = document.createElement("input");
+        deptInput.type = "text";
+        deptInput.className = "text expandable";
+        deptCell.appendChild(deptInput);
+
+        // 4. Должность
+        const jobCell = row.insertCell();
+        const jobInput = document.createElement("input");
+        jobInput.type = "text";
+        jobInput.className = "text expandable";
+        jobCell.appendChild(jobInput);
+
+        // 5. Дата
+        const dateCell = row.insertCell();
+        const dateInput = document.createElement("input");
+        dateInput.type = "date";
+        dateInput.className = "text";
+        dateCell.appendChild(dateInput);
+
+        // 6. Проект
+        const projCell = row.insertCell();
+        const projSelect = document.createElement("select");
+        projSelect.className = "select";
+        projSelect.innerHTML = projects.map(p =>
+          `<option value="${p.id}">${p.name}</option>`
+        ).join("");
+        projCell.appendChild(projSelect);
+
+        // 🧠 Событие: При выборе пользователя из списка
+        userInput.addEventListener("input", function () {
+          const match = users.find(u => u.name.toLowerCase().includes(this.value.toLowerCase()));
+          if (match) {
+            deptInput.value = match.department;
+            jobInput.value = match.job_title;
+            hiddenUserId.value = match.id;
+          }
+        });
+
+        // 📏 Авто-расширение полей при фокусе
+        [deptInput, jobInput].forEach(input => {
+          input.addEventListener("focus", () => input.style.width = "300px");
+          input.addEventListener("blur", () => input.style.width = "100%");
+        });
+      });
+
+
+    submitBtn.addEventListener("click", () => {
+      const result = [];
+
+      for (let row of tableBody.rows) {
+        const active = row.cells[0].querySelector("input").checked;
+        if (!active) continue; // ❌ Пропускаем неактивные
+
+        const userId = row.cells[1].querySelector("input[type='hidden']").value;
+
+        const data = {
+          active: true,
+          user_id: userId,
+          department: row.cells[2].querySelector("input").value,
+          job_title: row.cells[3].querySelector("input").value,
+          date: row.cells[4].querySelector("input").value,
+          project_id: row.cells[5].querySelector("select").value
+        };
+
+        result.push(data);
+      }
+
+      const hiddenField = document.getElementById("report-data-field");
+      hiddenField.value = JSON.stringify(result);
+      hiddenField.form.submit();
+    });
+
+  });
+</script>
+

@@ -12,6 +12,10 @@ document_title = s.add_style alignment: {horizontal: :center, wrap_text: true}, 
 wrap_importer = s.add_style alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman' 
 title_main_text = s.add_style alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
 main_text_in_body = s.add_style sz: 12, alignment: {horizontal: :justify, vertical: :center, wrap_text: :true}, font_name: 'Times New Roman'
+bold_date = s.add_style sz: 12, alignment: {horizontal: :left, wrap_text: true}, font_name: 'Times New Roman', sz: 12, b: true
+footer_left = s.add_style sz: 12, alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
+footer_right = s.add_style sz: 12, alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
+plug = s.add_style sz: 12, font_name: 'Times New Roman'
 
 issues = Issue.all
 users = User.all
@@ -29,7 +33,7 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
     rt.add_run("\n")
     rt.add_run('(ООО НИИСТИС)')
 
-    sheet.add_row [rt, "", "", ""], style: document_title
+    sheet.add_row [rt, "", "", ""], height: 62, style: document_title
     sheet.merge_cells("A1:D1")
     sheet.add_row ["", "", "", ""]
 
@@ -55,7 +59,7 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
     rt_right.add_run("\n", alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
     rt_right.add_run('Ф.В. Петрову', alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
 
-    sheet.add_row [rt_left_with_date, "" , rt_right, ""], style: wrap_importer
+    sheet.add_row [rt_left_with_date, "" , rt_right, ""], height: 65, style: wrap_importer
     sheet.merge_cells("C3:D3")
     sheet.merge_cells("A3:B3")
     sheet.add_row ["", "", "", ""]
@@ -86,12 +90,17 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
     
     sheet.merge_cells("A13:C13")
 
+    merge_iterator = 14
+
     selected_users.each do |user|
 
         date_next = Date.today
 
 
+
         @date_range_overtime2.each do |date_todo|
+
+
 
             if @global_type_overwork == "option_1" #Проверка на то какой тип отчета выбран (в будний день или в выходной)
 
@@ -122,8 +131,10 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
                     formatted = "#{day} #{month} #{year} года (#{wday})"
                     
                     if date_next != date_todo
-                        sheet.add_row ["", "    #{formatted}:", "", ""]
+                        sheet.add_row ["", "#{formatted}:", "", ""], style: bold_date
+                        merge_iterator += 1
                     end
+
 
                     date_next = date_todo
 
@@ -131,13 +142,37 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
                     custom_field_users_job_title = user.custom_field_values.detect {|cf| cf.custom_field.name == 'job_title'}
                     otdel = user.groups
                     otdel_for_print = ""
-                    otdel.each do |rev|
-                        otdel_for_print += rev.to_s + " "
-                    end
+
                     
+                    otdel_for_print = otdel[0].to_s
+
+
+                    if otdel_for_print == "Испытательная лаборатория"
+                        otdel_for_print = "Испытательной лаборатории"
+                    elsif otdel_for_print == "Конструкторско-технологический отдел"
+                        otdel_for_print = "Конструкторско-технологического отдела"
+                    elsif otdel_for_print == "Сектор встроенного программного обеспечения"
+                        otdel_for_print = "Сектора встроенного программного обеспечения"
+                    elsif otdel_for_print == "Сектор источников питания"
+                        otdel_for_print = "Сектора источников питания"
+                    elsif otdel_for_print == "Сектор конструирования РЭА"
+                        otdel_for_print = "Сектора конструирования РЭА"
+                    elsif otdel_for_print == "Сектор печатных плат"
+                        otdel_for_print = "Сектора печатных плат"
+                    elsif otdel_for_print == "Тематический отдел №1"
+                        otdel_for_print = "Тематического отдела №1"
+                    elsif otdel_for_print == "Тематический отдел №2"
+                        otdel_for_print = "Тематического отдела №2"
+                    elsif otdel_for_print == "Управление по научно-технической работе"
+                        otdel_for_print = "Управления по научно-технической работе"
+                    end
+
+
 
                     issues_on_loop.each do |issue_on_list|
-                        sheet.add_row ["", "    —   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} работы по #{issue_on_list.project}", "",""]
+                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""], style: main_text_in_body
+                        sheet.merge_cells("B#{merge_iterator}:C#{merge_iterator}")
+                        merge_iterator += 1
                     end
                     
 
@@ -147,12 +182,76 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
 
             else
 
+                custom_field = TimeEntryCustomField.find_by(name: 'Тип работ')
 
-            end
+                time_entries = TimeEntry
+                    .joins(:custom_values)
+                    .where(user_id: user.id, spent_on: date_todo)
+                    .where(custom_values: {
+                        custom_field_id: custom_field.id,
+                        value: 'Сверхурочная'
+                    })
+
+                issues_on_loop = Issue.where(id: time_entries.pluck(:issue_id).uniq) 
+                                  
+                unless date_todo.saturday? || date_todo.sunday?
+                    
+                    if issues_on_loop == []
+                        next
+                    end
+
+                    date = Date.parse("#{date_todo}")
+                    day = date.day
+                    month = I18n.t("date.month_names")[date.month]
+                    year = date.year
+                    wday = I18n.t("date.day_names")[date.wday]
+
+                    formatted = "#{day} #{month} #{year} года (#{wday})"
+                    
+                    if date_next != date_todo
+                        sheet.add_row ["", "#{formatted}:", "", ""], style: bold_date
+                        merge_iterator += 1
+                    end
+
+                    date_next = date_todo
+
+                    custom_field_users_surname = user.custom_field_values.detect {|cf| cf.custom_field.name == 'surname'}
+                    custom_field_users_job_title = user.custom_field_values.detect {|cf| cf.custom_field.name == 'job_title'}
+                    otdel = user.groups
+                    otdel_for_print = ""
+
+                    otdel_for_print = otdel[0].to_s
 
 
-            
-            
+                    if otdel_for_print == "Испытательная лаборатория"
+                        otdel_for_print = "Испытательной лаборатории"
+                    elsif otdel_for_print == "Конструкторско-технологический отдел"
+                        otdel_for_print = "Конструкторско-технологического отдела"
+                    elsif otdel_for_print == "Сектор встроенного программного обеспечения"
+                        otdel_for_print = "Сектора встроенного программного обеспечения"
+                    elsif otdel_for_print == "Сектор источников питания"
+                        otdel_for_print = "Сектора источников питания"
+                    elsif otdel_for_print == "Сектор конструирования РЭА"
+                        otdel_for_print = "Сектора конструирования РЭА"
+                    elsif otdel_for_print == "Сектор печатных плат"
+                        otdel_for_print = "Сектора печатных плат"
+                    elsif otdel_for_print == "Тематический отдел №1"
+                        otdel_for_print = "Тематического отдела №1"
+                    elsif otdel_for_print == "Тематический отдел №2"
+                        otdel_for_print = "Тематического отдела №2"
+                    elsif otdel_for_print == "Управление по научно-технической работе"
+                        otdel_for_print = "Управления по научно-технической работе"
+                    end
+
+                    issues_on_loop.each do |issue_on_list|
+                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""], style: main_text_in_body
+                        sheet.merge_cells("B#{merge_iterator}:C#{merge_iterator}")
+                        merge_iterator += 1
+                    end
+                else
+                    next
+                end
+            end 
         end
     end
 
@@ -161,7 +260,12 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
     sheet.add_row ["", "", "", ""]
     sheet.add_row ["", "", "", ""]
     sheet.add_row ["", "", "", ""]
-    sheet.add_row ["Начальник УНТР", "", "Д.С. Бикзигитов", ""]
+    merge_iterator += 4
+    sheet.add_row ["Начальник УНТР", "", "Д.С. Бикзигитов", ""], style: [
+        footer_left, plug, footer_right, plug 
+    ]
+    sheet.merge_cells("C#{merge_iterator}:D#{merge_iterator}")
+    sheet.merge_cells("A#{merge_iterator}:B#{merge_iterator}")
     sheet.column_widths 4, 47, 30, 8
     
 end

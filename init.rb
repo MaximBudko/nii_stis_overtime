@@ -1,10 +1,8 @@
 Redmine::Plugin.register :overtime_work do
   name 'Overtime Work plugin'
   author 'Maxim Budko'
-  description 'Отчет о сверурочной работе'
-  version '0.2.3'
-  url 'http://example.com/path/to/plugin'
-  author_url 'http://example.com/about'
+  description 'Отчет о сверхурочной работе'
+  version '0.2.4'
 
   # Разрешение
   project_module :overtime_work do

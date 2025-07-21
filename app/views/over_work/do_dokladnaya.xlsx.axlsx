@@ -170,7 +170,7 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
 
 
                     issues_on_loop.each do |issue_on_list|
-                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""], style: main_text_in_body
+                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print.downcase} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""], style: main_text_in_body
                         sheet.merge_cells("B#{merge_iterator}:C#{merge_iterator}")
                         merge_iterator += 1
                     end
@@ -244,7 +244,7 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
                     end
 
                     issues_on_loop.each do |issue_on_list|
-                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""], style: main_text_in_body
+                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print.downcase} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""], style: main_text_in_body
                         sheet.merge_cells("B#{merge_iterator}:C#{merge_iterator}")
                         merge_iterator += 1
                     end

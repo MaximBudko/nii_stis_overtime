@@ -1,5 +1,6 @@
 require 'set'
 require 'i18n'
+require 'caxlsx'
 
 I18n.load_path << 'config/locales/ru.yml'
 I18n.locale = :ru
@@ -84,6 +85,15 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
     p @report_data
 
     sheet.add_row ["","","",""]
+
+    sheet.print_options do |print_opts|
+        print_opts.horizontal_centered = true
+        print_opts.vertical_centered = true
+    end
+    sheet.page_margins do |margins|
+      margins.top = 0.25     # верхний отступ: 0.25 дюйма
+      margins.bottom = 0.25  # нижний отступ: 0.25 дюйма
+    end
 
     sheet.column_widths 4, 47, 30, 8
 end

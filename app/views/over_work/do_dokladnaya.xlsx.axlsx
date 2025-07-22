@@ -1,5 +1,6 @@
 require 'set'
 require 'i18n'
+require 'caxlsx'
 
 I18n.load_path << 'config/locales/ru.yml'
 I18n.locale = :ru
@@ -12,9 +13,9 @@ document_title = s.add_style alignment: {horizontal: :center, wrap_text: true}, 
 wrap_importer = s.add_style alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman' 
 title_main_text = s.add_style alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
 main_text_in_body = s.add_style sz: 12, alignment: {horizontal: :justify, vertical: :center, wrap_text: :true}, font_name: 'Times New Roman'
-bold_date = s.add_style sz: 12, alignment: {horizontal: :left, wrap_text: true}, font_name: 'Times New Roman', sz: 12, b: true
-footer_left = s.add_style sz: 12, alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
-footer_right = s.add_style sz: 12, alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
+bold_date = s.add_style alignment: {horizontal: :left, wrap_text: true}, font_name: 'Times New Roman', sz: 12, b: true
+footer_left = s.add_style alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
+footer_right = s.add_style alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
 plug = s.add_style sz: 12, font_name: 'Times New Roman'
 
 issues = Issue.all
@@ -33,8 +34,8 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
     rt.add_run("\n")
     rt.add_run('(ООО НИИСТИС)')
 
-    sheet.add_row [rt, "", "", ""], height: 62, style: document_title
-    sheet.merge_cells("A1:D1")
+    sheet.add_row [rt, "", "", ""], height: 80, style: document_title
+    sheet.merge_cells("A1:C1")
     sheet.add_row ["", "", "", ""]
 
     rt_left_with_date = Axlsx::RichText.new
@@ -59,8 +60,8 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
     rt_right.add_run("\n", alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
     rt_right.add_run('Ф.В. Петрову', alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
 
-    sheet.add_row [rt_left_with_date, "" , rt_right, ""], height: 65, style: wrap_importer
-    sheet.merge_cells("C3:D3")
+    sheet.add_row [rt_left_with_date, "" , rt_right, ""], height: 80, style: wrap_importer
+    #sheet.merge_cells("C3:D3")
     sheet.merge_cells("A3:B3")
     sheet.add_row ["", "", "", ""]
     sheet.add_row ["", "", "", ""]
@@ -71,7 +72,7 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
     sheet.add_row ["", "", "", ""]
     sheet.add_row ["Докладная записка", "", "", ""], style: title_main_text
     sheet.add_row ["", "", "", ""]
-    sheet.merge_cells("A11:D11")
+    sheet.merge_cells("A11:C11")
 
     tp_wrk = ""
     if @global_type_overwork == "option_1"
@@ -170,8 +171,8 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
 
 
                     issues_on_loop.each do |issue_on_list|
-                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print.downcase} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""], style: main_text_in_body
                         sheet.merge_cells("B#{merge_iterator}:C#{merge_iterator}")
+                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print.downcase} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""], style: main_text_in_body
                         merge_iterator += 1
                     end
                     
@@ -244,8 +245,8 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
                     end
 
                     issues_on_loop.each do |issue_on_list|
+                        sheet.merge_cells("B#{merge_iterator}:C#{merge_iterator}")                    
                         sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print.downcase} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""], style: main_text_in_body
-                        sheet.merge_cells("B#{merge_iterator}:C#{merge_iterator}")
                         merge_iterator += 1
                     end
                 else
@@ -264,8 +265,16 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
     sheet.add_row ["Начальник УНТР", "", "Д.С. Бикзигитов", ""], style: [
         footer_left, plug, footer_right, plug 
     ]
-    sheet.merge_cells("C#{merge_iterator}:D#{merge_iterator}")
+    #sheet.merge_cells("C#{merge_iterator}:D#{merge_iterator}")
     sheet.merge_cells("A#{merge_iterator}:B#{merge_iterator}")
+    sheet.print_options do |print_opts|
+        print_opts.horizontal_centered = true
+        print_opts.vertical_centered = true
+    end
+    sheet.page_margins do |margins|
+      margins.top = 0.25     # верхний отступ: 0.25 дюйма
+      margins.bottom = 0.25  # нижний отступ: 0.25 дюйма
+    end
     sheet.column_widths 4, 47, 30, 8
     
 end

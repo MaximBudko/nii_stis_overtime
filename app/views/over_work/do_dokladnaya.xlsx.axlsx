@@ -86,7 +86,7 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
         "",
         "",
         ""
-    ], style: main_text_in_body
+    ], height: 30, style: main_text_in_body
 
     
     sheet.merge_cells("A13:C13")
@@ -172,7 +172,7 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
 
                     issues_on_loop.each do |issue_on_list|
                         sheet.merge_cells("B#{merge_iterator}:C#{merge_iterator}")
-                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print.downcase} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""], style: main_text_in_body
+                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print.downcase} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""],height: 30, style: main_text_in_body
                         merge_iterator += 1
                     end
                     
@@ -246,7 +246,7 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
 
                     issues_on_loop.each do |issue_on_list|
                         sheet.merge_cells("B#{merge_iterator}:C#{merge_iterator}")                    
-                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print.downcase} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""], style: main_text_in_body
+                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print.downcase} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""], height: 30, style: main_text_in_body
                         merge_iterator += 1
                     end
                 else
@@ -269,11 +269,10 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
     sheet.merge_cells("A#{merge_iterator}:B#{merge_iterator}")
     sheet.print_options do |print_opts|
         print_opts.horizontal_centered = true
-        print_opts.vertical_centered = true
     end
     sheet.page_margins do |margins|
-      margins.top = 0.25     # верхний отступ: 0.25 дюйма
-      margins.bottom = 0.25  # нижний отступ: 0.25 дюйма
+      margins.top = 0.5     # верхний отступ: 0.25 дюйма
+      margins.bottom = 0.5  # нижний отступ: 0.25 дюйма
     end
     sheet.column_widths 4, 47, 30, 8
     

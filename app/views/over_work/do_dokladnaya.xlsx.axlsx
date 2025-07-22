@@ -15,7 +15,7 @@ title_main_text = s.add_style alignment: {horizontal: :center, vertical: :center
 main_text_in_body = s.add_style sz: 12, alignment: {horizontal: :justify, vertical: :center, wrap_text: :true}, font_name: 'Times New Roman'
 bold_date = s.add_style alignment: {horizontal: :left, wrap_text: true}, font_name: 'Times New Roman', sz: 12, b: true
 footer_left = s.add_style alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
-footer_right = s.add_style alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
+footer_right = s.add_style alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
 plug = s.add_style sz: 12, font_name: 'Times New Roman'
 
 issues = Issue.all

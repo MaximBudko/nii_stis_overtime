@@ -172,7 +172,7 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
 
                     issues_on_loop.each do |issue_on_list|
                         sheet.merge_cells("B#{merge_iterator}:C#{merge_iterator}")
-                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print.downcase} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""],height: 30, style: main_text_in_body
+                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print.downcase} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project.root})", "",""],height: 30, style: main_text_in_body
                         merge_iterator += 1
                     end
                     
@@ -246,7 +246,7 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
 
                     issues_on_loop.each do |issue_on_list|
                         sheet.merge_cells("B#{merge_iterator}:C#{merge_iterator}")                    
-                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print.downcase} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project})", "",""], height: 30, style: main_text_in_body
+                        sheet.add_row ["", "—   #{custom_field_users_job_title.to_s.downcase} #{otdel_for_print.downcase} #{user.name.to_s[0]}. #{custom_field_users_surname.to_s[0]}. #{user.lastname.to_s} (работы по #{issue_on_list.project.root})", "",""], height: 30, style: main_text_in_body
                         merge_iterator += 1
                     end
                 else
@@ -259,9 +259,8 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
 
     sheet.add_row ["", "", "", ""]
     sheet.add_row ["", "", "", ""]
-    sheet.add_row ["", "", "", ""]
-    sheet.add_row ["", "", "", ""]
-    merge_iterator += 4
+
+    merge_iterator += 2
     sheet.add_row ["Начальник УНТР", "", "Д.С. Бикзигитов", ""], style: [
         footer_left, plug, footer_right, plug 
     ]

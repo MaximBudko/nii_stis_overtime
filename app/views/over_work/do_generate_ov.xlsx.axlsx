@@ -160,7 +160,7 @@ wb.add_worksheet(name: "Report") do |sheet|
                                     sheet.add_row [
                                         "#{serial}",
                                         "#{custom_field_users_job_title}\n#{user.firstname.to_s[0]}.#{custom_field_users_surname.to_s[0]}. #{user.lastname}",
-                                        "#{issue.project.name}",
+                                        "#{issue.project.root}",
                                         "#{issue.description}",
                                         "#{formatted_time}"
                                     ], style: [issue_iter,issues_row , issues_row, issues_row, estimate_issue_row]
@@ -275,7 +275,7 @@ wb.add_worksheet(name: "Report") do |sheet|
                                     sheet.add_row [
                                         "#{serial}",
                                         "#{custom_field_users_job_title}\n#{user.firstname.to_s[0]}.#{custom_field_users_surname.to_s[0]}. #{user.lastname}",
-                                        "#{issue.project.name}",
+                                        "#{issue.project.root}",
                                         "#{issue.description}",
                                         "#{formatted_time}"
                                     ], style: [issue_iter, issues_row, issues_row, issues_row, estimate_issue_row]

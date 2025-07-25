@@ -12,6 +12,7 @@ class OverWorkController < ApplicationController
   def users_by_date
     start_date = Date.parse(params[:start_date]) rescue nil
     end_date = Date.parse(params[:end_date]) rescue nil
+    construct_date = Date.parse(params[:constuct_date]) rescue nil
   
     if start_date.nil? || end_date.nil?
       render json: [], status: :unprocessable_entity and return
@@ -61,6 +62,7 @@ class OverWorkController < ApplicationController
     end_date_str = params[:end_date]
     type_overwork = params[:option_select]
     report_type = params[:report_type]
+    construct_date = params[:constuct_date]
 
     @global_type_overwork = type_overwork.to_s
 
@@ -79,8 +81,14 @@ class OverWorkController < ApplicationController
       redirect_to action: :generate_overtime_report and return 
     end 
 
+    if construct_date.blank?
+      flash[:error] = "Укажите дату формирования отчета"
+      redirect_to action: :generate_overtime_report and return 
+    end 
+
     start_date = Date.parse(start_date_str)
     end_date = Date.parse(end_date_str)
+    @construct_date_to_template = Date.parse(construct_date)
 
     date_range = (start_date..end_date).to_a
     @date_range_overtime = date_range

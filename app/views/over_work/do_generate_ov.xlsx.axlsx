@@ -14,7 +14,7 @@ estimate_issue_row = s.add_style sz: 11, alignment: {horizontal: :center, vertic
 signature = s.add_style sz: 11, alignment: {horizontal: :left, vertical: :bottom}, font_name: 'Times New Roman'
 issue_iter = s.add_style sz: 11, alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, font_name: 'Times New Roman', border: {style: :thin, color: '000000'}
 
-
+serial_number = 1
 issues = Issue.all
 users = User.all
 
@@ -103,7 +103,7 @@ wb.add_worksheet(name: "Report") do |sheet|
                         custom_field_users_job_title = user.custom_field_values.detect {|cf| cf.custom_field.name == 'job_title'}
 
                         group = user.groups
-                        serial_number = 1
+                        
                         group.each do |user_group|
 
                             time_entries = TimeEntry
@@ -165,6 +165,7 @@ wb.add_worksheet(name: "Report") do |sheet|
                                         "#{formatted_time}"
                                     ], style: [issue_iter,issues_row , issues_row, issues_row, estimate_issue_row]
                                     iterator += 1
+                                    serial_number += 1
                                 end
 
                                 if task_count > 1
@@ -173,7 +174,7 @@ wb.add_worksheet(name: "Report") do |sheet|
                                     sheet.merge_cells("B#{merge_start}:B#{merge_end}")
                                 end
 
-                                serial_number += 1
+
                             end
                         end
                     end
@@ -218,7 +219,6 @@ wb.add_worksheet(name: "Report") do |sheet|
                         custom_field_users_job_title = user.custom_field_values.detect {|cf| cf.custom_field.name == 'job_title'}
 
                         group = user.groups
-                        serial_number = 1
                         group.each do |user_group|
 
                             time_entries = TimeEntry
@@ -280,6 +280,7 @@ wb.add_worksheet(name: "Report") do |sheet|
                                         "#{formatted_time}"
                                     ], style: [issue_iter, issues_row, issues_row, issues_row, estimate_issue_row]
                                     iterator += 1
+                                    serial_number += 1
                                 end
 
                                 if task_count > 1
@@ -288,7 +289,7 @@ wb.add_worksheet(name: "Report") do |sheet|
                                     sheet.merge_cells("B#{merge_start}:B#{merge_end}")
                                 end
 
-                                serial_number += 1
+                                
                             end
                         end
                     end

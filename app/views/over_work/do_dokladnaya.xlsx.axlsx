@@ -10,7 +10,8 @@ wb = xlsx_package.workbook
 #Стили к таблицам
 s = wb.styles
 document_title = s.add_style alignment: {horizontal: :center, wrap_text: true}, font_name: 'Times New Roman', sz: 14, b: true
-wrap_importer = s.add_style alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman' 
+wrap_importer = s.add_style alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
+wrap_importer_right = s.add_style alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman' 
 title_main_text = s.add_style alignment: {horizontal: :center, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
 main_text_in_body = s.add_style sz: 12, alignment: {horizontal: :justify, vertical: :center, wrap_text: :true}, font_name: 'Times New Roman'
 bold_date = s.add_style alignment: {horizontal: :left, wrap_text: true}, font_name: 'Times New Roman', sz: 12, b: true
@@ -18,6 +19,7 @@ footer_left = s.add_style alignment: {horizontal: :left, vertical: :center, wrap
 footer_right = s.add_style alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman'
 plug = s.add_style sz: 12, font_name: 'Times New Roman'
 
+construct_date = @construct_date_to_template
 issues = Issue.all
 users = User.all
 selected_users = User.find(@global_user_ids)
@@ -41,7 +43,7 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
     rt_left_with_date = Axlsx::RichText.new
     rt_right = Axlsx::RichText.new
 
-    td_date = Date.today
+    td_date = construct_date
     td_date_formated = td_date.strftime('%d/%m/%Y')
 
     rt_left_with_date.add_run('Управление по научно-технической работе', alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
@@ -60,7 +62,7 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
     rt_right.add_run("\n", alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
     rt_right.add_run('Ф.В. Петрову', alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
 
-    sheet.add_row [rt_left_with_date, "" , rt_right, ""], height: 80, style: wrap_importer
+    sheet.add_row [rt_left_with_date, "" , rt_right, ""], height: 80, style: [wrap_importer, plug, wrap_importer_right, plug]
     #sheet.merge_cells("C3:D3")
     sheet.merge_cells("A3:B3")
     sheet.add_row ["", "", "", ""]

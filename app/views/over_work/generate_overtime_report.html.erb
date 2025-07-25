@@ -14,8 +14,9 @@
   </fieldset>
 
   <fieldset style="margin-top: 20px;">
-    <legend><strong>Тип отчета:</strong></legend>
+    <legend><strong>Тип отчета и дата формирования:</strong></legend>
     <%= select_tag :option_select, options_for_select([['В выходные', 'option_1'], ['В будни', 'option_2']]), include_blank: '--- Выберите ---' %>
+    <%= date_field_tag :constuct_date, nil, id: 'construct_date_picker'%>
   </fieldset>
 
   <fieldset style="margin-top: 20px;">

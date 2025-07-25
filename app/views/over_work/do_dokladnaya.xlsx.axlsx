@@ -27,6 +27,13 @@ selected_users = User.find(@global_user_ids)
 job_title_field = CustomField.find_by(name: 'job_title')
 
 wb.add_worksheet(name: "Dokladnaya") do |sheet|
+    tp_wrk = ""
+    if @global_type_overwork == "option_1"
+        tp_wrk = "работе в выходные дни"
+    else
+        tp_wrk = "сверхурочным работам"
+    end
+
     rt = Axlsx::RichText.new
     rt.add_run('Общество с ограниченной ответственностью')
     rt.add_run("\n")
@@ -54,7 +61,7 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
     rt_left_with_date.add_run("\n", alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
     rt_left_with_date.add_run(' ', alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
     rt_left_with_date.add_run("\n", alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
-    rt_left_with_date.add_run('О привлечении к сверхурочным работам', alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, i: true, font_name: 'Times New Roman')
+    rt_left_with_date.add_run("О привлечении к #{tp_wrk}", alignment: {horizontal: :left, vertical: :center, wrap_text: :true}, sz: 12, i: true, font_name: 'Times New Roman')
 
     rt_right.add_run('Директору', alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
     rt_right.add_run("\n", alignment: {horizontal: :right, vertical: :center, wrap_text: :true}, sz: 12, font_name: 'Times New Roman')
@@ -75,13 +82,6 @@ wb.add_worksheet(name: "Dokladnaya") do |sheet|
     sheet.add_row ["Докладная записка", "", "", ""], style: title_main_text
     sheet.add_row ["", "", "", ""]
     sheet.merge_cells("A11:C11")
-
-    tp_wrk = ""
-    if @global_type_overwork == "option_1"
-        tp_wrk = "работе в выходные дни"
-    else
-        tp_wrk = "сверхурочным работам"
-    end
 
     sheet.add_row [
         "   В связи с производственной необходимостью и ввиду большого объема текущих работ, прошу привлечь к #{tp_wrk} следующих работников:",
